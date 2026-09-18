@@ -473,19 +473,15 @@ class Handler(BaseHTTPRequestHandler):
         # ERROR
         # ----------------------------------------------------
 
-        except Exception as e:
+                except Exception as e:
 
-            print(
-                "CHAT ERROR:",
-                repr(e)
-            )
+            print("CHAT ERROR:", repr(e))
 
             self.send_json(
                 {
                     "error":
                         "No se pudo procesar la consulta.",
-                    "detail":
-                        str(e)
+                    "detail": str(e)
                 },
                 500
             )
