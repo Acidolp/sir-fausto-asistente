@@ -54,12 +54,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error":"No se pudo procesar la consulta.","detail":str(e)}, 500)
 
     def do_GET(self):
-    if urlparse(self.path).path in ("/","/index.html"):
+        if urlparse(self.path).path in ("/", "/index.html"):
             html = (ROOT/"index.html").read_bytes()
-            self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8")
-            self.end_headers(); self.wfile.write(html)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(html)
         else:
-            self.send_response(404); self.end_headers()
-
-if __name__ == "__main__":
-    ThreadingHTTPServer(("0.0.0.0", int(os.environ.get("PORT","8000"))), Handler).serve_forever()
+            self.send_response(404)
+            self.end_headers()
