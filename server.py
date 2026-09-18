@@ -15,14 +15,30 @@ BASE_DIR = Path(__file__).resolve().parent
 
 KNOWLEDGE_FILE = BASE_DIR / "knowledge.json"
 
-with open(KNOWLEDGE_FILE, "r", encoding="utf-8") as f:
-    KNOWLEDGE = json.load(f)
 
+# ============================================================
+# CARGAR BASE DE CONOCIMIENTO
+# ============================================================
+
+try:
+    with open(KNOWLEDGE_FILE, "r", encoding="utf-8") as f:
+        KNOWLEDGE = json.load(f)
+
+    print("Base de conocimiento cargada correctamente.")
+
+except Exception as e:
+    print("ERROR CARGANDO knowledge.json:", repr(e))
+    KNOWLEDGE = {}
+
+
+# ============================================================
+# OPENAI
+# ============================================================
 
 API_KEY = os.environ.get("OPENAI_API_KEY")
 
 if not API_KEY:
-    print("ADVERTENCIA: No se encontró OPENAI_API_KEY.")
+    print("ADVERTENCIA: OPENAI_API_KEY no está configurada.")
 
 client = OpenAI(api_key=API_KEY) if API_KEY else None
 
@@ -40,133 +56,158 @@ para barba, cabello, styling, cuidado facial y cuidado personal.
 REGLAS IMPORTANTES:
 
 1. Respondé siempre en español argentino, de manera clara,
-   amable, natural y comercial, pero sin ser insistente.
+   amable, natural y comercial.
 
-2. Usá principalmente la información contenida en la base de
-   conocimiento proporcionada.
+2. Utilizá principalmente la información contenida en la base
+   de conocimiento proporcionada.
 
 3. NO inventes productos, características, tamaños, precios,
-   promociones ni beneficios que no estén en la información.
+   promociones ni beneficios.
 
 4. Los PRECIOS deben salir exclusivamente de la lista de precios
    proporcionada en la base de conocimiento.
 
 5. Si el cliente pregunta si un producto está disponible,
    NO supongas que hay stock.
+
    Respondé:
    "Consultar disponibilidad."
 
-6. Cuando recomiendes un producto, indicá:
+6. Cuando recomiendes un producto, indicá cuando corresponda:
+
    - Nombre del producto.
    - Para qué sirve.
-   - Por qué puede ser adecuado para lo que busca el cliente.
-   - Precio, solamente si está disponible en la lista de precios.
-   - Fuente: catálogo y página cuando esté disponible.
+   - Por qué puede ser adecuado para lo que busca.
+   - Precio.
+   - Catálogo y página.
 
-7. Si el usuario pregunta por varios productos, podés compararlos
-   de manera descriptiva, sin inventar características.
+7. Si el precio no está disponible en la base de conocimiento,
+   no inventes uno.
 
-8. Si la consulta no está relacionada con Sir Fausto,
-   respondé brevemente y tratá de volver al tema de productos.
+8. Si el cliente pregunta por varios productos, podés
+   compararlos de manera descriptiva.
 
-9. No hagas diagnósticos médicos ni prometas resultados médicos.
+9. Si el cliente solamente saluda, respondé cordialmente.
+
+   Ejemplo:
+
+   "¡Hola! 👋 Bienvenido/a a Sir Fausto LP.
+   ¿Qué estás buscando?
+   Puedo ayudarte con productos para barba,
+   cabello, styling o cuidado facial."
 
 10. Si el cliente describe un problema de piel, cabello o barba,
-    podés orientar sobre los productos según la información del
-    catálogo, pero aclarando que no reemplaza la consulta con
-    un profesional cuando corresponda.
+    orientá únicamente según la información disponible en los
+    catálogos.
 
-11. Si el cliente solamente saluda, respondé de forma cordial.
-    Ejemplo:
-    "¡Hola! 👋 Bienvenido/a a Sir Fausto LP.
-    ¿Qué estás buscando? Puedo ayudarte con productos para barba,
-    cabello, styling o cuidado facial."
+11. No realices diagnósticos médicos ni prometas resultados
+    médicos.
 
-12. Instagram oficial para contacto:
+12. Si no encontrás la información solicitada en la base de
+    conocimiento, decí claramente que no tenés ese dato.
+
+13. Instagram oficial:
+
     @SirFausto.lp
 
-13. No incluyas enlaces a sirfausto.ar como llamada a la acción.
-    Cuando corresponda, invitá a seguir o contactar mediante
-    Instagram @SirFausto.lp.
+14. No utilices sirfausto.ar como llamada a la acción.
 
-14. No inventes disponibilidad.
+15. No inventes disponibilidad.
 
-15. Si no encontrás la respuesta en la base de conocimiento,
-    decí claramente que no tenés ese dato y sugerí consultar
-    directamente con Sir Fausto LP.
+16. Mantené las respuestas relativamente cortas y fáciles
+    de leer desde un celular.
 
-Tu objetivo es brindar respuestas útiles, concretas y confiables.
+17. Cuando sea útil, podés utilizar emojis de forma moderada.
+
+18. El objetivo es ayudar al cliente a encontrar el producto
+    adecuado de manera clara y confiable.
 """
 
 
 # ============================================================
-# BASE DE CONOCIMIENTO
+# BASE DE CONOCIMIENTO EN TEXTO
 # ============================================================
 
-def knowledge_text():
-    """
-    Convierte knowledge.json en texto para que el modelo
-    pueda utilizar la información de los catálogos y precios.
-    """
+def get_knowledge_text():
 
-    return json.dumps(
-        KNOWLEDGE,
-        ensure_ascii=False,
-        indent=2
-    )
+    try:
+
+        return json.dumps(
+            KNOWLEDGE,
+            ensure_ascii=False,
+            indent=2
+        )
+
+    except Exception as e:
+
+        print(
+            "ERROR CONVIRTIENDO KNOWLEDGE:",
+            repr(e)
+        )
+
+        return "{}"
 
 
 # ============================================================
-# HANDLER HTTP
+# SERVIDOR
 # ============================================================
 
 class Handler(BaseHTTPRequestHandler):
 
-    # --------------------------------------------------------
-    # RESPUESTAS JSON
-    # --------------------------------------------------------
+    # ========================================================
+    # RESPUESTA JSON
+    # ========================================================
 
     def send_json(self, data, status=200):
 
-        body = json.dumps(
-            data,
-            ensure_ascii=False
-        ).encode("utf-8")
+        try:
 
-        self.send_response(status)
+            body = json.dumps(
+                data,
+                ensure_ascii=False
+            ).encode("utf-8")
 
-        self.send_header(
-            "Content-Type",
-            "application/json; charset=utf-8"
-        )
+            self.send_response(status)
 
-        self.send_header(
-            "Content-Length",
-            str(len(body))
-        )
+            self.send_header(
+                "Content-Type",
+                "application/json; charset=utf-8"
+            )
 
-        self.send_header(
-            "Access-Control-Allow-Origin",
-            "*"
-        )
+            self.send_header(
+                "Content-Length",
+                str(len(body))
+            )
 
-        self.send_header(
-            "Access-Control-Allow-Headers",
-            "Content-Type"
-        )
+            self.send_header(
+                "Access-Control-Allow-Origin",
+                "*"
+            )
 
-        self.send_header(
-            "Access-Control-Allow-Methods",
-            "GET, POST, OPTIONS"
-        )
+            self.send_header(
+                "Access-Control-Allow-Headers",
+                "Content-Type"
+            )
 
-        self.end_headers()
+            self.send_header(
+                "Access-Control-Allow-Methods",
+                "GET, POST, OPTIONS"
+            )
 
-        self.wfile.write(body)
+            self.end_headers()
 
-    # --------------------------------------------------------
+            self.wfile.write(body)
+
+        except Exception as e:
+
+            print(
+                "ERROR EN send_json:",
+                repr(e)
+            )
+
+    # ========================================================
     # OPTIONS
-    # --------------------------------------------------------
+    # ========================================================
 
     def do_OPTIONS(self):
 
@@ -189,35 +230,35 @@ class Handler(BaseHTTPRequestHandler):
 
         self.end_headers()
 
-    # --------------------------------------------------------
+    # ========================================================
     # GET
-    # --------------------------------------------------------
+    # ========================================================
 
     def do_GET(self):
 
-        # Quitamos parámetros como:
-        # ?utm_source=chatgpt.com
+        try:
 
-        path = urlparse(self.path).path
+            path = urlparse(self.path).path
 
-        # Página principal
+            # ------------------------------------------------
+            # PÁGINA PRINCIPAL
+            # ------------------------------------------------
 
-        if path in ("/", "/index.html"):
+            if path in ("/", "/index.html"):
 
-            index_file = BASE_DIR / "index.html"
+                index_file = BASE_DIR / "index.html"
 
-            if not index_file.exists():
+                if not index_file.exists():
 
-                self.send_json(
-                    {
-                        "error": "No se encontró index.html"
-                    },
-                    404
-                )
+                    self.send_json(
+                        {
+                            "error":
+                                "No se encontró index.html"
+                        },
+                        404
+                    )
 
-                return
-
-            try:
+                    return
 
                 content = index_file.read_bytes()
 
@@ -237,61 +278,28 @@ class Handler(BaseHTTPRequestHandler):
 
                 self.wfile.write(content)
 
-            except Exception as e:
+                return
 
-                print(
-                    "INDEX ERROR:",
-                    repr(e)
-                )
+            # ------------------------------------------------
+            # HEALTH CHECK
+            # ------------------------------------------------
+
+            if path == "/health":
 
                 self.send_json(
                     {
-                        "error": "No se pudo cargar la página."
-                    },
-                    500
+                        "status": "ok",
+                        "service": "Sir Fausto LP",
+                        "openai_configured":
+                            bool(client)
+                    }
                 )
 
-            return
+                return
 
-        # ----------------------------------------------------
-        # HEALTH CHECK
-        # ----------------------------------------------------
-
-        if path == "/health":
-
-            self.send_json(
-                {
-                    "status": "ok",
-                    "service": "Sir Fausto LP"
-                }
-            )
-
-            return
-
-        # ----------------------------------------------------
-        # 404
-        # ----------------------------------------------------
-
-        self.send_json(
-            {
-                "error": "Ruta no encontrada."
-            },
-            404
-        )
-
-    # --------------------------------------------------------
-    # POST
-    # --------------------------------------------------------
-
-    def do_POST(self):
-
-        path = urlparse(self.path).path
-
-        # ----------------------------------------------------
-        # API CHAT
-        # ----------------------------------------------------
-
-        if path != "/api/chat":
+            # ------------------------------------------------
+            # 404
+            # ------------------------------------------------
 
             self.send_json(
                 {
@@ -300,10 +308,49 @@ class Handler(BaseHTTPRequestHandler):
                 404
             )
 
+        except Exception as e:
+
+            print(
+                "GET ERROR:",
+                repr(e)
+            )
+
+            self.send_json(
+                {
+                    "error":
+                        "Error interno del servidor.",
+                    "detail":
+                        str(e)
+                },
+                500
+            )
+
+    # ========================================================
+    # POST
+    # ========================================================
+
+    def do_POST(self):
+
+        path = urlparse(self.path).path
+
+        # ----------------------------------------------------
+        # VERIFICAR RUTA
+        # ----------------------------------------------------
+
+        if path != "/api/chat":
+
+            self.send_json(
+                {
+                    "error":
+                        "Ruta no encontrada."
+                },
+                404
+            )
+
             return
 
         # ----------------------------------------------------
-        # VERIFICAR API KEY
+        # VERIFICAR OPENAI
         # ----------------------------------------------------
 
         if not client:
@@ -321,13 +368,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
 
             # ------------------------------------------------
-            # LEER BODY
+            # LEER REQUEST
             # ------------------------------------------------
 
             content_length = int(
                 self.headers.get(
                     "Content-Length",
-                    0
+                    "0"
                 )
             )
 
@@ -335,22 +382,30 @@ class Handler(BaseHTTPRequestHandler):
                 content_length
             )
 
+            if not body:
+
+                self.send_json(
+                    {
+                        "error":
+                            "La consulta está vacía."
+                    },
+                    400
+                )
+
+                return
+
             data = json.loads(
                 body.decode("utf-8")
             )
 
             # ------------------------------------------------
-            # OBTENER MENSAJES
+            # MENSAJES
             # ------------------------------------------------
 
             messages = data.get(
                 "messages",
                 []
             )
-
-            # ------------------------------------------------
-            # LIMITAR HISTORIAL
-            # ------------------------------------------------
 
             if not isinstance(
                 messages,
@@ -359,27 +414,35 @@ class Handler(BaseHTTPRequestHandler):
 
                 messages = []
 
+            # Nos quedamos con los últimos 20 mensajes.
+
             messages = messages[-20:]
 
             # ------------------------------------------------
-            # CONSTRUIR INPUT
+            # CREAR INPUT
             # ------------------------------------------------
 
             input_messages = []
 
-            # Mensaje del sistema
+            knowledge = get_knowledge_text()
+
+            system_content = (
+                SYSTEM_PROMPT
+                + "\n\n"
+                + "BASE DE CONOCIMIENTO:\n"
+                + knowledge
+            )
 
             input_messages.append(
                 {
                     "role": "system",
-                    "content":
-                        SYSTEM_PROMPT
-                        + "\n\nBASE DE CONOCIMIENTO:\n"
-                        + knowledge_text()
+                    "content": system_content
                 }
             )
 
-            # Mensajes del usuario
+            # ------------------------------------------------
+            # AGREGAR HISTORIAL
+            # ------------------------------------------------
 
             for message in messages:
 
@@ -409,7 +472,9 @@ class Handler(BaseHTTPRequestHandler):
                 ):
                     continue
 
-                if not content.strip():
+                content = content.strip()
+
+                if not content:
                     continue
 
                 input_messages.append(
@@ -420,10 +485,10 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
             # ------------------------------------------------
-            # VERIFICAR QUE HAYA CONSULTA
+            # VERIFICAR CONSULTA
             # ------------------------------------------------
 
-            if len(input_messages) <= 1:
+            if len(input_messages) < 2:
 
                 self.send_json(
                     {
@@ -439,6 +504,10 @@ class Handler(BaseHTTPRequestHandler):
             # LLAMADA A OPENAI
             # ------------------------------------------------
 
+            print(
+                "Enviando consulta a OpenAI..."
+            )
+
             response = client.responses.create(
 
                 model="gpt-5.6",
@@ -447,7 +516,7 @@ class Handler(BaseHTTPRequestHandler):
             )
 
             # ------------------------------------------------
-            # OBTENER RESPUESTA
+            # RESPUESTA
             # ------------------------------------------------
 
             answer = response.output_text
@@ -459,36 +528,45 @@ class Handler(BaseHTTPRequestHandler):
                     "en este momento."
                 )
 
+            print(
+                "Respuesta de OpenAI recibida correctamente."
+            )
+
             # ------------------------------------------------
-            # DEVOLVER RESPUESTA
+            # DEVOLVER AL FRONTEND
             # ------------------------------------------------
 
             self.send_json(
                 {
                     "answer": answer
-                }
+                },
+                200
             )
 
         # ----------------------------------------------------
         # ERROR
         # ----------------------------------------------------
 
-                except Exception as e:
+        except Exception as e:
 
-            print("CHAT ERROR:", repr(e))
+            print(
+                "CHAT ERROR:",
+                repr(e)
+            )
 
             self.send_json(
                 {
                     "error":
                         "No se pudo procesar la consulta.",
-                    "detail": str(e)
+                    "detail":
+                        str(e)
                 },
                 500
             )
 
 
 # ============================================================
-# SERVIDOR
+# INICIAR SERVIDOR
 # ============================================================
 
 if __name__ == "__main__":
@@ -496,8 +574,36 @@ if __name__ == "__main__":
     port = int(
         os.environ.get(
             "PORT",
-            10000
+            "10000"
         )
+    )
+
+    print(
+        "========================================"
+    )
+
+    print(
+        "   SIR FAUSTO LP - ASISTENTE IA"
+    )
+
+    print(
+        "========================================"
+    )
+
+    print(
+        f"Puerto: {port}"
+    )
+
+    print(
+        f"OpenAI configurado: {bool(client)}"
+    )
+
+    print(
+        f"Knowledge cargado: {bool(KNOWLEDGE)}"
+    )
+
+    print(
+        "========================================"
     )
 
     server = ThreadingHTTPServer(
@@ -506,7 +612,7 @@ if __name__ == "__main__":
     )
 
     print(
-        f"Sir Fausto LP funcionando en puerto {port}"
+        "Servidor iniciado correctamente."
     )
 
     server.serve_forever()
