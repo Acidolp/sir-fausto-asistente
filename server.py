@@ -4,11 +4,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from openai import OpenAI
-
 
 # ============================================================
-# SIR FAUSTO LP - SERVIDOR DEL ASISTENTE
+# SIR FAUSTO LP - ASISTENTE IA
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -16,36 +14,53 @@ KNOWLEDGE_FILE = BASE_DIR / "knowledge.json"
 
 
 # ============================================================
-# CARGAR BASE DE CONOCIMIENTO
+# CONFIGURACIÓN
 # ============================================================
 
-try:
-    with open(KNOWLEDGE_FILE, "r", encoding="utf-8") as file:
-        KNOWLEDGE = json.load(file)
+PORT = int(
+    os.environ.get(
+        "PORT",
+        "10000"
+    )
+)
 
-    print("OK - knowledge.json cargado")
-
-except Exception as error:
-    print("ERROR - No se pudo cargar knowledge.json:", repr(error))
-    KNOWLEDGE = {}
-
-
-# ============================================================
-# OPENAI
-# ============================================================
-
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-
-if OPENAI_API_KEY:
-    client = OpenAI(api_key=OPENAI_API_KEY)
-    print("OK - OPENAI_API_KEY configurada")
-else:
-    client = None
-    print("ERROR - OPENAI_API_KEY no configurada")
+OPENAI_API_KEY = os.environ.get(
+    "OPENAI_API_KEY"
+)
 
 
 # ============================================================
-# INSTRUCCIONES DEL ASISTENTE
+# CARGAR KNOWLEDGE
+# ============================================================
+
+def load_knowledge():
+
+    try:
+
+        with open(
+            KNOWLEDGE_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            return json.load(file)
+
+    except Exception as error:
+
+        print(
+            "ERROR knowledge.json:",
+            repr(error),
+            flush=True
+        )
+
+        return {}
+
+
+KNOWLEDGE = load_knowledge()
+
+
+# ============================================================
+# PROMPT
 # ============================================================
 
 SYSTEM_PROMPT = """
@@ -59,7 +74,7 @@ Ayudás a los clientes a elegir productos Sir Fausto para:
 - Cuidado facial
 - Cuidado personal
 
-REGLAS:
+REGLAS IMPORTANTES:
 
 1. Respondé siempre en español argentino.
 
@@ -78,25 +93,25 @@ REGLAS:
 8. Los precios deben salir EXCLUSIVAMENTE de la lista de
    precios incluida en la base de conocimiento.
 
-9. Si un producto no tiene precio registrado, no inventes el
-   precio.
+9. Si un producto no tiene precio registrado,
+   no inventes uno.
 
-10. Si el cliente pregunta si hay stock o disponibilidad,
+10. Si el cliente pregunta por stock o disponibilidad,
     respondé:
     "Consultar disponibilidad."
 
-11. Nunca supongas que un producto está disponible.
+11. Nunca supongas que hay stock.
 
-12. Cuando recomiendes un producto, cuando sea posible indicá:
+12. Cuando recomiendes un producto, indicá cuando sea posible:
 
-    - Nombre
+    - Nombre del producto
     - Para qué sirve
-    - Por qué puede servir para lo que busca el cliente
+    - Por qué puede servir para lo que busca
     - Precio
     - Catálogo y página
 
-13. Si el cliente pregunta por varios productos, podés
-    compararlos utilizando solamente la información disponible.
+13. Si pregunta por varios productos, podés compararlos
+    utilizando solamente la información disponible.
 
 14. Si el cliente solamente saluda, respondé cordialmente.
 
@@ -104,11 +119,11 @@ REGLAS:
 
     "¡Hola! 👋 Bienvenido/a a Sir Fausto LP.
     ¿Qué estás buscando?
-    Puedo ayudarte con productos para barba, cabello,
-    styling o cuidado facial."
+    Puedo ayudarte con productos para barba,
+    cabello, styling o cuidado facial."
 
-15. Si el cliente pregunta algo que no está en la base de
-    conocimiento, decí que no tenés ese dato.
+15. Si algo no está en la base de conocimiento,
+    decí que no tenés ese dato.
 
 16. No inventes promociones.
 
@@ -120,16 +135,16 @@ REGLAS:
 
 20. No prometas resultados médicos.
 
-21. Si el usuario consulta por piel, cabello o barba, podés
-    orientar únicamente utilizando la información de los
+21. Si el usuario consulta por piel, cabello o barba,
+    orientá únicamente utilizando la información de los
     catálogos.
 
-22. Instagram de Sir Fausto LP:
+22. Instagram:
     @SirFausto.lp
 
 23. No utilices sirfausto.ar como llamada a la acción.
 
-24. Priorizá respuestas cortas y fáciles de leer desde un celular.
+24. Mantené las respuestas claras y relativamente cortas.
 
 25. Podés utilizar emojis moderadamente.
 
@@ -139,12 +154,13 @@ REGLAS:
 
 
 # ============================================================
-# CONVERTIR KNOWLEDGE A TEXTO
+# KNOWLEDGE EN TEXTO
 # ============================================================
 
-def get_knowledge():
+def knowledge_text():
 
     try:
+
         return json.dumps(
             KNOWLEDGE,
             ensure_ascii=False,
@@ -152,24 +168,31 @@ def get_knowledge():
         )
 
     except Exception as error:
+
         print(
-            "ERROR - knowledge:",
-            repr(error)
+            "ERROR convirtiendo knowledge:",
+            repr(error),
+            flush=True
         )
+
         return "{}"
 
 
 # ============================================================
-# HANDLER
+# HTTP HANDLER
 # ============================================================
 
 class Handler(BaseHTTPRequestHandler):
 
     # --------------------------------------------------------
-    # RESPUESTA JSON
+    # JSON
     # --------------------------------------------------------
 
-    def send_json(self, data, status=200):
+    def send_json(
+        self,
+        data,
+        status=200
+    ):
 
         body = json.dumps(
             data,
@@ -245,9 +268,14 @@ class Handler(BaseHTTPRequestHandler):
             ).path
 
             # Página principal
-            if path == "/" or path == "/index.html":
+            if path in (
+                "/",
+                "/index.html"
+            ):
 
-                index_file = BASE_DIR / "index.html"
+                index_file = (
+                    BASE_DIR / "index.html"
+                )
 
                 if not index_file.exists():
 
@@ -261,7 +289,9 @@ class Handler(BaseHTTPRequestHandler):
 
                     return
 
-                content = index_file.read_bytes()
+                content = (
+                    index_file.read_bytes()
+                )
 
                 self.send_response(200)
 
@@ -277,7 +307,9 @@ class Handler(BaseHTTPRequestHandler):
 
                 self.end_headers()
 
-                self.wfile.write(content)
+                self.wfile.write(
+                    content
+                )
 
                 return
 
@@ -287,17 +319,18 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(
                     {
                         "status": "ok",
-                        "service": "Sir Fausto LP",
-                        "openai":
-                            bool(client),
+                        "service":
+                            "Sir Fausto LP",
                         "knowledge":
-                            bool(KNOWLEDGE)
+                            bool(KNOWLEDGE),
+                        "api_key":
+                            bool(OPENAI_API_KEY)
                     }
                 )
 
                 return
 
-            # Ruta inexistente
+            # 404
             self.send_json(
                 {
                     "error":
@@ -310,19 +343,17 @@ class Handler(BaseHTTPRequestHandler):
 
             print(
                 "GET ERROR:",
-                repr(error)
+                repr(error),
+                flush=True
             )
 
-            try:
-                self.send_json(
-                    {
-                        "error":
-                            "Error interno del servidor."
-                    },
-                    500
-                )
-            except Exception:
-                pass
+            self.send_json(
+                {
+                    "error":
+                        "Error interno."
+                },
+                500
+            )
 
     # --------------------------------------------------------
     # POST
@@ -351,10 +382,10 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         # ----------------------------------------------------
-        # VERIFICAR OPENAI
+        # API KEY
         # ----------------------------------------------------
 
-        if client is None:
+        if not OPENAI_API_KEY:
 
             self.send_json(
                 {
@@ -366,11 +397,21 @@ class Handler(BaseHTTPRequestHandler):
 
             return
 
-        # ----------------------------------------------------
-        # PROCESAR CONSULTA
-        # ----------------------------------------------------
-
         try:
+
+            # ------------------------------------------------
+            # IMPORTAR OPENAI SOLO CUANDO SE NECESITA
+            # ------------------------------------------------
+
+            from openai import OpenAI
+
+            client = OpenAI(
+                api_key=OPENAI_API_KEY
+            )
+
+            # ------------------------------------------------
+            # LEER REQUEST
+            # ------------------------------------------------
 
             content_length = int(
                 self.headers.get(
@@ -388,7 +429,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(
                     {
                         "error":
-                            "No se recibió ninguna consulta."
+                            "Consulta vacía."
                     },
                     400
                 )
@@ -408,13 +449,14 @@ class Handler(BaseHTTPRequestHandler):
                 messages,
                 list
             ):
+
                 messages = []
 
             # Últimos 20 mensajes
             messages = messages[-20:]
 
             # ------------------------------------------------
-            # ARMAR CONVERSACIÓN
+            # CONSTRUIR INPUT
             # ------------------------------------------------
 
             input_messages = []
@@ -426,7 +468,7 @@ class Handler(BaseHTTPRequestHandler):
                         SYSTEM_PROMPT
                         + "\n\n"
                         + "BASE DE CONOCIMIENTO:\n"
-                        + get_knowledge()
+                        + knowledge_text()
                 }
             )
 
@@ -471,7 +513,7 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
             # ------------------------------------------------
-            # VERIFICAR QUE EXISTA MENSAJE
+            # VALIDAR
             # ------------------------------------------------
 
             if len(input_messages) < 2:
@@ -486,22 +528,21 @@ class Handler(BaseHTTPRequestHandler):
 
                 return
 
-            # ------------------------------------------------
-            # LLAMAR A OPENAI
-            # ------------------------------------------------
-
             print(
-                "CHAT - Enviando consulta a OpenAI..."
+                "CHAT: enviando consulta a OpenAI...",
+                flush=True
             )
+
+            # ------------------------------------------------
+            # OPENAI RESPONSES API
+            # ------------------------------------------------
 
             response = client.responses.create(
+
                 model="gpt-5.6",
+
                 input=input_messages
             )
-
-            # ------------------------------------------------
-            # OBTENER TEXTO
-            # ------------------------------------------------
 
             answer = response.output_text
 
@@ -513,28 +554,24 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
             print(
-                "CHAT - Respuesta recibida correctamente."
+                "CHAT: respuesta recibida.",
+                flush=True
             )
-
-            # ------------------------------------------------
-            # DEVOLVER RESPUESTA
-            # ------------------------------------------------
 
             self.send_json(
                 {
-                    "answer": answer
+                    "answer":
+                        answer
                 },
                 200
             )
 
         except Exception as error:
 
-            # ESTE BLOQUE ES IMPORTANTE
-            # PARA VER EL ERROR REAL EN RENDER
-
             print(
                 "CHAT ERROR:",
-                repr(error)
+                repr(error),
+                flush=True
             )
 
             self.send_json(
@@ -549,44 +586,61 @@ class Handler(BaseHTTPRequestHandler):
 
 
 # ============================================================
-# INICIAR SERVIDOR
+# ARRANQUE DEL SERVIDOR
 # ============================================================
 
 if __name__ == "__main__":
 
-    port = int(
-        os.environ.get(
-            "PORT",
-            "10000"
-        )
+    print(
+        "========================================",
+        flush=True
     )
 
-    print("")
-    print("========================================")
-    print("      SIR FAUSTO LP - ASISTENTE IA")
-    print("========================================")
     print(
-        "Puerto:",
-        port
+        "SIR FAUSTO LP - ASISTENTE IA",
+        flush=True
     )
+
     print(
-        "OpenAI:",
-        bool(client)
+        "========================================",
+        flush=True
     )
+
     print(
-        "Knowledge:",
-        bool(KNOWLEDGE)
+        f"Puerto Render: {PORT}",
+        flush=True
     )
-    print("========================================")
-    print("")
+
+    print(
+        f"Knowledge cargado: {bool(KNOWLEDGE)}",
+        flush=True
+    )
+
+    print(
+        f"API Key configurada: {bool(OPENAI_API_KEY)}",
+        flush=True
+    )
+
+    print(
+        "Iniciando servidor...",
+        flush=True
+    )
+
+    # --------------------------------------------------------
+    # ABRIR PUERTO INMEDIATAMENTE
+    # --------------------------------------------------------
 
     server = ThreadingHTTPServer(
-        ("0.0.0.0", port),
+        (
+            "0.0.0.0",
+            PORT
+        ),
         Handler
     )
 
     print(
-        "Servidor iniciado correctamente."
+        f"Servidor escuchando en 0.0.0.0:{PORT}",
+        flush=True
     )
 
     server.serve_forever()
