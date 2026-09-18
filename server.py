@@ -54,7 +54,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error":"No se pudo procesar la consulta.","detail":str(e)}, 500)
 
     def do_GET(self):
-        if self.path in ("/","/index.html"):
+    if urlparse(self.path).path in ("/","/index.html"):
             html = (ROOT/"index.html").read_bytes()
             self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8")
             self.end_headers(); self.wfile.write(html)
