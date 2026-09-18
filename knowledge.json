@@ -1,0 +1,190 @@
+{
+  "rules": [
+    "Responder en español argentino, tono amable, natural y comercial.",
+    "Usar los catálogos como fuente principal de características y recomendaciones.",
+    "Los precios salen exclusivamente de la lista de precios suministrada.",
+    "Nunca afirmar que un producto está en stock. Para disponibilidad usar siempre: Consultar.",
+    "Cuando corresponda, indicar catálogo y página.",
+    "No inventar productos, precios, stock ni características no respaldadas.",
+    "Si el usuario saluda, responder cordialmente y ofrecer ayuda.",
+    "Para consultas de síntomas o problemas médicos, no diagnosticar; limitarse a la información del catálogo y sugerir consulta profesional si corresponde.",
+    "CTA: Instagram @SirFausto.lp."
+  ],
+  "products": [
+    {
+      "id": "SIR1015",
+      "name": "Shampoo para Barba",
+      "price": 9224.25,
+      "catalog": "Barba Collection",
+      "page": 4
+    },
+    {
+      "id": "SIR4032",
+      "name": "Tónico Fortalecedor Barba",
+      "price": 54203.43,
+      "catalog": "Barba Collection",
+      "page": 5
+    },
+    {
+      "id": "SIR4020",
+      "name": "Pomada para Barba",
+      "price": 25015.96,
+      "catalog": "Barba Collection",
+      "page": 6
+    },
+    {
+      "id": "SIR4010",
+      "name": "Óleo Fortalecedor Barba",
+      "price": 21442.37,
+      "catalog": "Barba Collection",
+      "page": 7
+    },
+    {
+      "id": "SIR4000",
+      "name": "Óleo Esencial Barba",
+      "price": 16843.5,
+      "catalog": "Barba Collection",
+      "page": 8
+    },
+    {
+      "id": "SIR6080",
+      "name": "Forming Paste",
+      "price": 21722.74,
+      "catalog": "Styling",
+      "page": 4
+    },
+    {
+      "id": "SIR6045",
+      "name": "Pomada Opaca",
+      "price": 16443.93,
+      "catalog": "Styling",
+      "page": 5
+    },
+    {
+      "id": "SIR6055",
+      "name": "Pomada Brillante",
+      "price": 14948.98,
+      "catalog": "Styling",
+      "page": 6
+    },
+    {
+      "id": "SIR6015",
+      "name": "Old Wax Suave",
+      "price": 14948.98,
+      "catalog": "Styling",
+      "page": 7
+    },
+    {
+      "id": "SIR6005",
+      "name": "Old Wax Fuerte",
+      "price": 14948.98,
+      "catalog": "Styling",
+      "page": 8
+    },
+    {
+      "id": "SIR6100",
+      "name": "Old Wax Extra Fuerte",
+      "price": 14948.98,
+      "catalog": "Styling",
+      "page": 9
+    },
+    {
+      "id": "SIR6120",
+      "name": "Sea Salt",
+      "price": null,
+      "catalog": "Styling",
+      "page": 10
+    },
+    {
+      "id": "SIR6130",
+      "name": "Rock Cream",
+      "price": null,
+      "catalog": "Styling",
+      "page": 11
+    },
+    {
+      "id": "SIR6140",
+      "name": "Wet Look",
+      "price": 16834.76,
+      "catalog": "Styling",
+      "page": 12
+    },
+    {
+      "id": "SIR6110",
+      "name": "Spray",
+      "price": 30969.04,
+      "catalog": "Styling",
+      "page": 13
+    },
+    {
+      "id": "SIRP010",
+      "name": "Micellar Water PURE",
+      "price": 17938.84,
+      "catalog": "PURE",
+      "page": 4
+    },
+    {
+      "id": "SIRP015",
+      "name": "Facial Mask PURE",
+      "price": 19336.36,
+      "catalog": "PURE",
+      "page": 5
+    },
+    {
+      "id": "SIRP016",
+      "name": "Serum PURE",
+      "price": 21546.21,
+      "catalog": "PURE",
+      "page": 6
+    },
+    {
+      "id": "SIRP017",
+      "name": "Shower Gel PURE",
+      "price": 20993.84,
+      "catalog": "PURE",
+      "page": 7
+    },
+    {
+      "id": "SIRP009",
+      "name": "Shave Oil PURE",
+      "price": 32595.63,
+      "catalog": "PURE",
+      "page": 8
+    },
+    {
+      "id": "SIRP001",
+      "name": "Shampoo PURE",
+      "price": 12430.45,
+      "catalog": "PURE",
+      "page": 9
+    },
+    {
+      "id": "SIRP004",
+      "name": "Balm PURE",
+      "price": 13259.18,
+      "catalog": "PURE",
+      "page": 10
+    },
+    {
+      "id": "SIRP008",
+      "name": "Tónico PURE",
+      "price": 20993.84,
+      "catalog": "PURE",
+      "page": 11
+    },
+    {
+      "id": "SIRP013",
+      "name": "Hybrid Clay PURE",
+      "price": 13425.02,
+      "catalog": "PURE",
+      "page": 12
+    },
+    {
+      "id": "SIRP011",
+      "name": "Hybrid Mousse PURE",
+      "price": 13425.02,
+      "catalog": "PURE",
+      "page": 13
+    }
+  ]
+}
